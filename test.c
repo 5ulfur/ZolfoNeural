@@ -4,12 +4,14 @@
 
 int main()
 {
+	initZolfoNeural();
+	
 	//Neural network structure
 	int numInputs = 4;
 	int numOutputs = 3;
 	int numHiddenLayers = 1;
 	int hiddenLayers[] = {4};
-	enum Activation activations[] = {LINEAR, SIGMOID, SIGMOID};
+	Activation activations[] = {LINEAR, SIGMOID, SIGMOID};
 	
 	//Hyperparameters
 	int epochs = 10000;
@@ -18,8 +20,8 @@ int main()
 	//Dataset
 	int numEntries = 150;
 	double inputs[numEntries][numInputs];
-    double targets[numEntries][numOutputs];
-    loadDataset("dataset/dataset_iris.txt", numEntries, numInputs, numOutputs, inputs, targets);
+	double targets[numEntries][numOutputs];
+	loadDataset("dataset/dataset_iris.txt", numEntries, numInputs, numOutputs, inputs, targets);
 	
 	NeuralNetwork neuralNetwork = newNeuralNetwork(numInputs, numOutputs, numHiddenLayers, hiddenLayers, activations);
 	train(&neuralNetwork, sizeof(inputs) / sizeof(inputs[0]), inputs, targets, learningRate, epochs);

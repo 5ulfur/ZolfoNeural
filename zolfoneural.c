@@ -18,11 +18,18 @@ static double relu_derivative(double x);
 static double softmax(double x);
 static double softmax_derivative(double x);
 
-static void setActivationFunction(Layer* layer, enum Activation activation);
+static void setActivationFunction(Layer* layer, Activation activation);
 
 static double randomWeight();
-static void initializeWeights(NeuralNetwork* neuralNetwork);
-static Layer newLayer(int numNeurons, enum Activation activation);
+static void initWeights(NeuralNetwork* neuralNetwork);
+static double generateUniformBias();
+static double generateGaussianBias(double avg, double deviation);
+static Layer newLayer(int numNeurons, Activation activation);
+
+void initZolfoNeural()
+{
+	srand(time(NULL));
+}
 
 static double linear(double x)
 {
@@ -65,7 +72,7 @@ static double softmax_derivative(double x)
 	return x * (1.0 - x);
 }
 
-static void setActivationFunction(Layer* layer, enum Activation activation)
+static void setActivationFunction(Layer* layer, Activation activation)
 {
 	layer->activationType = activation;
 	switch(activation)
@@ -94,9 +101,8 @@ static double randomWeight()
 	return (((double) rand()) / RAND_MAX * 2.0 - 1.0);
 }
 
-static void initializeWeights(NeuralNetwork* neuralNetwork)
+static void initWeights(NeuralNetwork* neuralNetwork)
 {
-	srand(time(NULL));
 	for(int layer = 1; layer < neuralNetwork->numLayers; layer++)
 	{
 		Layer* prevLayer = &neuralNetwork->layers[layer - 1];
@@ -120,7 +126,52 @@ static void initializeWeights(NeuralNetwork* neuralNetwork)
 	}
 }
 
-static Layer newLayer(int numNeurons, enum Activation activation)
+static double generateUniformBias()
+{
+	return (((double) rand()) / RAND_MAX * 2.0 - 1.0);
+}
+
+static double generateGaussianBias(double avg, double deviation)
+{
+	double rand1 = rand() / (double) RAND_MAX;
+	double rand2 = rand() / (double) RAND_MAX;
+	double res = sqrt(-2.0 * log(rand1)) * cos(2.0 * M_PI * rand2);
+	
+	return avg + deviation * res;
+}
+
+void initBiases(NeuralNetwork* neuralNetwork, BiasInitParams* biasInitParams)
+{
+	for(int layer = 1; layer < neuralNetwork->numLayers; layer++)
+	{
+		Layer* currLayer = &neuralNetwork->layers[layer];
+		
+		for(int neuron = 0; neuron < currLayer->numNeurons; neuron++)
+		{
+			Neuron* currNeuron = &currLayer->neurons[neuron];
+			
+			currNeuron->biasInitMethod = biasInitParams->biasInitMethod;
+			
+			switch(currNeuron->biasInitMethod)
+			{
+				case ZERO:
+					currNeuron->bias = 0.0;
+					break;
+				case CONSTANT:
+					currNeuron->bias = biasInitParams->constantVal;
+					break;
+				case UNIFORM:
+					currNeuron->bias = generateUniformBias();
+					break;
+				case GAUSSIAN:
+					currNeuron->bias = generateGaussianBias(biasInitParams->gaussianAvg, biasInitParams->gaussianDeviation);
+					break;
+			}
+		}
+	}
+}
+
+static Layer newLayer(int numNeurons, Activation activation)
 {
 	Layer layer;
 	
@@ -131,7 +182,7 @@ static Layer newLayer(int numNeurons, enum Activation activation)
 	return layer;
 }
 
-NeuralNetwork newNeuralNetwork(int numInputs, int numOutputs, int numHiddenLayers, int hiddenLayers[], enum Activation activations[])
+NeuralNetwork newNeuralNetwork(int numInputs, int numOutputs, int numHiddenLayers, int hiddenLayers[], Activation activations[])
 {
 	NeuralNetwork neuralNetwork;
 	
@@ -150,7 +201,12 @@ NeuralNetwork newNeuralNetwork(int numInputs, int numOutputs, int numHiddenLayer
 	//Output layer
 	neuralNetwork.layers[neuralNetwork.numLayers - 1] = newLayer(numOutputs, activations[neuralNetwork.numLayers - 1]);
 	
-	initializeWeights(&neuralNetwork);
+	initWeights(&neuralNetwork);
+	
+	BiasInitParams biasInitParams;
+	biasInitParams.biasInitMethod = CONSTANT;
+	biasInitParams.constantVal = 0.0;
+	initBiases(&neuralNetwork, biasInitParams);
 	
 	return neuralNetwork;
 }
@@ -162,14 +218,14 @@ NeuralNetwork loadNeuralNetwork(char* filename)
 	NeuralNetwork neuralNetwork;
 	int numInputs, numOutputs, numHiddenLayers;
 	int* hiddenLayers;
-	enum Activation* activations;
+	Activation* activations;
 	
 	fscanf(file, "%d", &numInputs);
 	fscanf(file, "%d", &numOutputs);
 	fscanf(file, "%d", &numHiddenLayers);
 	
 	hiddenLayers = (int*) malloc(numHiddenLayers * sizeof(int));
-	activations = (enum Activation*) malloc((numHiddenLayers + 1) * sizeof(enum Activation));
+	activations = (Activation*) malloc((numHiddenLayers + 1) * sizeof(Activation));
 	
 	for(int i = 0; i < numHiddenLayers; i++)
 	{
@@ -198,6 +254,8 @@ NeuralNetwork loadNeuralNetwork(char* filename)
 			{
 				fscanf(file, "%lf", &currNeuron->weights[weight]);
 			}
+			
+			fscanf(file, "%lf", &currNeuron->bias);
 		}
 	}
 	
@@ -234,13 +292,12 @@ void saveNeuralNetwork(char* filename, NeuralNetwork* neuralNetwork)
 		{
 			Neuron* currNeuron = &currLayer->neurons[neuron];
 			
-			currNeuron->output = 0.0;
-			currNeuron->delta = 0.0;
-			
 			for(int weight = 0; weight < currNeuron->numWeights; weight++)
 			{
 				fprintf(file, "%.10lf ", currNeuron->weights[weight]);
 			}
+			
+			fprintf(file, "%.10lf ", currNeuron->bias);
 		}
 	}
 	
@@ -287,6 +344,8 @@ void feedForward(NeuralNetwork* neuralNetwork, double* inputs)
 				weightedSum += prevLayer->neurons[weight].output * currNeuron->weights[weight];
 			}
 			
+			weightedSum += currNeuron->bias;
+			
 			currNeuron->output = (*(currLayer->activation))(weightedSum);
 		}
 	}
@@ -325,7 +384,7 @@ void backwardPropagation(NeuralNetwork* neuralNetwork, double* inputs, double* t
 		}
 	}
 	
-	//Weights update
+	//Weights and biases update
 	Layer* firstLayer = &neuralNetwork->layers[1];
 	for(int neuron = 0; neuron < firstLayer->numNeurons; neuron++)
 	{
@@ -334,6 +393,11 @@ void backwardPropagation(NeuralNetwork* neuralNetwork, double* inputs, double* t
 		for(int weight = 0; weight < currNeuron->numWeights; weight++)
 		{
 			currNeuron->weights[weight] += learningRate * (inputs[weight] * currNeuron->delta);
+		}
+		
+		if(currNeuron->biasInitMethod != CONSTANT)
+		{
+			currNeuron->bias += learningRate * currNeuron->delta;
 		}
 	}
 	
@@ -349,6 +413,11 @@ void backwardPropagation(NeuralNetwork* neuralNetwork, double* inputs, double* t
 			for(int weight = 0; weight < currNeuron->numWeights; weight++)
 			{
 				currNeuron->weights[weight] += learningRate * (prevLayer->neurons[weight].output * currNeuron->delta);
+			}
+			
+			if(currNeuron->biasInitMethod != CONSTANT)
+			{
+				currNeuron->bias += learningRate * currNeuron->delta;
 			}
 		}
 	}
@@ -415,6 +484,7 @@ void printNeuralNetwork(NeuralNetwork* neuralNetwork)
 			Neuron* currNeuron = &currLayer->neurons[neuron];
 			
 			printf("\t\tNeuron: %d\n", neuron);
+			printf("\t\t\tBias: %lf\n", currNeuron->bias);
 			printf("\t\t\tOutput: %lf\n", currNeuron->output);
 			printf("\t\t\tDelta: %lf\n", currNeuron->delta);
 			
