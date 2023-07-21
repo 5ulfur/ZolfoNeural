@@ -71,6 +71,13 @@ double* predict(NeuralNetwork* neuralNetwork, double* inputs);
 
 void loadDataset(char* filename, int numEntries, int numInputs, int numOutputs, double inputs[numEntries][numInputs], double targets[numEntries][numOutputs]);
 
+//Data normalization
+void zScoreNormalization(int numEntries, int numInputs, double inputs[numEntries][numInputs]);
+void minMaxScaling(int numEntries, int numInputs, double inputs[numEntries][numInputs]);
+void maxAbsScaling(int numEntries, int numInputs, double inputs[numEntries][numInputs]);
+void logScaling(int numEntries, int numInputs, double inputs[numEntries][numInputs]);
+void powerTransformation(int numEntries, int numInputs, double inputs[numEntries][numInputs], double exponent);
+
 //Prints neural network (NOT recommended for large networks)
 void printNeuralNetwork(NeuralNetwork* neuralNetwork);
 

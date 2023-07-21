@@ -469,6 +469,118 @@ void loadDataset(char* filename, int numEntries, int numInputs, int numOutputs, 
 	fclose(file);
 }
 
+void zScoreNormalization(int numEntries, int numInputs, double inputs[numEntries][numInputs])
+{
+	for(int input = 0; input < numInputs; input++)
+	{
+		double* vals = (double*) malloc(numEntries * sizeof(double));
+		for(int entry = 0; entry < numEntries; entry++)
+		{
+			vals[entry] = inputs[entry][input];
+		}
+		
+		double sum = 0.0, avg;
+		for(int val = 0; val < numEntries; val++)
+		{
+			sum += vals[val];
+		}
+		avg = sum / numEntries;
+		
+		double squaredSum = 0.0, stdDeviation;
+		for(int val = 0; val < numEntries; val++)
+		{
+			squaredSum += pow(vals[val] - avg, 2);
+		}
+		stdDeviation = sqrt(squaredSum / numEntries);
+		
+		for(int entry = 0; entry < numEntries; entry++)
+		{
+			inputs[entry][input] = (inputs[entry][input] - avg) / stdDeviation;
+		}
+		
+		free(vals);
+	}
+}
+
+void minMaxScaling(int numEntries, int numInputs, double inputs[numEntries][numInputs])
+{
+	double minVals[numInputs], maxVals[numInputs];
+	
+	for(int input = 0; input < numInputs; input++)
+	{
+		minVals[input] = inputs[0][input];
+		maxVals[input] = inputs[0][input];
+	}
+	
+	for(int entry = 0; entry < numEntries; entry++)
+	{
+		for(int input = 0; input < numInputs; input++)
+		{
+			if(inputs[entry][input] < minVals[input])
+			{
+				minVals[input] = inputs[entry][input];
+			}
+			if(inputs[entry][input] > maxVals[input])
+			{
+				maxVals[input] = inputs[entry][input];
+			}
+		}
+	}
+	
+	for(int entry = 0; entry < numEntries; entry++)
+	{
+		for(int input = 0; input < numInputs; input++)
+		{
+			inputs[entry][input] = (inputs[entry][input] - minVals[input]) / (maxVals[input] - minVals[input]);
+		}
+	}
+}
+
+void maxAbsScaling(int numEntries, int numInputs, double inputs[numEntries][numInputs])
+{
+	double maxAbsVals[numInputs];
+	for(int input = 0; input < numInputs; input++)
+	{
+		for(int entry = 0; entry < numEntries; entry++)
+		{
+			if(abs(inputs[entry][input]) > maxAbsVals[input])
+			{
+				maxAbsVals[input] = abs(inputs[entry][input]);
+			}
+		}
+	}
+	
+	for(int entry = 0; entry < numEntries; entry++)
+	{
+		for(int input = 0; input < numInputs; input++)
+		{
+			inputs[entry][input] /= maxAbsVals[input];
+		}
+	}
+}
+
+void logScaling(int numEntries, int numInputs, double inputs[numEntries][numInputs])
+{
+	for(int entry = 0; entry < numEntries; entry++)
+	{
+		for(int input = 0; input < numInputs; input++)
+		{
+			inputs[entry][input] = log(1 + inputs[entry][input]);
+		}
+	}
+}
+
+void powerTransformation(int numEntries, int numInputs, double inputs[numEntries][numInputs], double exponent)
+{
+	for(int entry = 0; entry < numEntries; entry++)
+	{
+		for(int input = 0; input < numInputs; input++)
+		{
+			inputs[entry][input] = pow(inputs[entry][input], exponent);
+		}
+	}
+}
+
 void printNeuralNetwork(NeuralNetwork* neuralNetwork)
 {
 	puts("NeuralNetwork:");
