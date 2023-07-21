@@ -36,7 +36,7 @@ typedef struct {
     Neuron* neurons;
     Activation activationType;
     double (*activation)(double);
-    double (*activation_derivative)(double);
+    double (*activationDerivative)(double);
 } Layer;
 
 typedef struct {
@@ -63,7 +63,7 @@ void initBiases(NeuralNetwork* neuralNetwork, BiasInitParams* biasInitParams);
 
 void feedForward(NeuralNetwork* neuralNetwork, double* inputs);
 
-void backwardPropagation(NeuralNetwork* neuralNetwork, double* inputs, double* targets, double learning_rate);
+void backwardPropagation(NeuralNetwork* neuralNetwork, double* inputs, double* targets, double learningRate);
 
 void train(NeuralNetwork* neuralNetwork, int numInputs, double inputs[][neuralNetwork->layers[0].numNeurons], double targets[][neuralNetwork->layers[neuralNetwork->numLayers - 1].numNeurons], double learningRate, int epochs);
 

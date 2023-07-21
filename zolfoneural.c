@@ -7,16 +7,16 @@
 //Activations
 //LINEAR
 static double linear(double x);
-static double linear_derivative(double x);
+static double linearDerivative(double x);
 //SIGMOID
 static double sigmoid(double x);
-static double sigmoid_derivative(double x);
+static double sigmoidDerivative(double x);
 //RELU
 static double relu(double x);
-static double relu_derivative(double x);
+static double reluDerivative(double x);
 //SOFTMAX
 static double softmax(double x);
-static double softmax_derivative(double x);
+static double softmaxDerivative(double x);
 
 static void setActivationFunction(Layer* layer, Activation activation);
 
@@ -36,7 +36,7 @@ static double linear(double x)
 	return x;
 }
 
-static double linear_derivative(double x)
+static double linearDerivative(double x)
 {
 	return 1;
 }
@@ -46,7 +46,7 @@ static double sigmoid(double x)
 	return 1 / (1 + exp(-x));
 }
 
-static double sigmoid_derivative(double x)
+static double sigmoidDerivative(double x)
 {
 	return x * (1 - x);
 }
@@ -56,18 +56,18 @@ static double relu(double x)
     return (x > 0.0) ? x : 0.0;
 }
 
-static double relu_derivative(double x)
+static double reluDerivative(double x)
 {
     return (x > 0.0) ? 1.0 : 0.0;
 }
 
 static double softmax(double x)
 {
-	double exp_val = exp(x);
-    return exp_val / (exp_val + 1.0);
+	double expVal = exp(x);
+    return expVal / (expVal + 1.0);
 }
 
-static double softmax_derivative(double x)
+static double softmaxDerivative(double x)
 {
 	return x * (1.0 - x);
 }
@@ -79,19 +79,19 @@ static void setActivationFunction(Layer* layer, Activation activation)
 	{
 		case LINEAR:
 			layer->activation = &linear;
-			layer->activation_derivative = &linear_derivative;
+			layer->activationDerivative = &linearDerivative;
 			break;
 		case SIGMOID:
 			layer->activation = &sigmoid;
-			layer->activation_derivative = &sigmoid_derivative;
+			layer->activationDerivative = &sigmoidDerivative;
 			break;
 		case RELU:
 			layer->activation = &relu;
-			layer->activation_derivative = &relu_derivative;
+			layer->activationDerivative = &reluDerivative;
 			break;
 		case SOFTMAX:
 			layer->activation = &softmax;
-			layer->activation_derivative = &softmax_derivative;
+			layer->activationDerivative = &softmaxDerivative;
 			break;
 	}
 }
@@ -206,7 +206,7 @@ NeuralNetwork newNeuralNetwork(int numInputs, int numOutputs, int numHiddenLayer
 	BiasInitParams biasInitParams;
 	biasInitParams.biasInitMethod = CONSTANT;
 	biasInitParams.constantVal = 0.0;
-	initBiases(&neuralNetwork, biasInitParams);
+	initBiases(&neuralNetwork, &biasInitParams);
 	
 	return neuralNetwork;
 }
@@ -362,7 +362,7 @@ void backwardPropagation(NeuralNetwork* neuralNetwork, double* inputs, double* t
 		Neuron* currNeuron = &outputLayer->neurons[neuron];
 		
 		double error = targets[neuron] - currNeuron->output;
-		currNeuron->delta = error * (*(outputLayer->activation_derivative))(currNeuron->output);
+		currNeuron->delta = error * (*(outputLayer->activationDerivative))(currNeuron->output);
 	}
 	
 	for(int layer = neuralNetwork->numLayers - 2; layer > 0; layer--)
@@ -379,7 +379,7 @@ void backwardPropagation(NeuralNetwork* neuralNetwork, double* inputs, double* t
 			{
 				delta += nextLayer->neurons[neuronNext].weights[neuron] * nextLayer->neurons[neuronNext].delta;
 			}
-			delta *= (*(currLayer->activation_derivative))(currNeuron->output);
+			delta *= (*(currLayer->activationDerivative))(currNeuron->output);
 			currNeuron->delta = delta;
 		}
 	}
