@@ -4,8 +4,13 @@
 typedef enum {
 	LINEAR,
 	SIGMOID,
+	TANH,
 	RELU,
-	SOFTMAX
+	SWISH,
+	MISH,
+	SOFTMAX,
+	SOFTPLUS,
+	BINARYSTEP
 } Activation;
 
 typedef enum {

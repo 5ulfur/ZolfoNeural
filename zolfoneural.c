@@ -11,12 +11,26 @@ static double linearDerivative(double x);
 //SIGMOID
 static double sigmoid(double x);
 static double sigmoidDerivative(double x);
+//TANH
+static double tanhDerivative(double x);
 //RELU
 static double relu(double x);
 static double reluDerivative(double x);
+//SWISH
+static double swish(double x);
+static double swishDerivative(double x);
+//MISH
+static double mish(double x);
+static double mishDerivative(double x);
 //SOFTMAX
 static double softmax(double x);
 static double softmaxDerivative(double x);
+//SOFTPLUS
+static double softplus(double x);
+static double softplusDerivative(double x);
+//BINARYSTEP
+static double binaryStep(double x);
+static double binaryStepDerivative(double x);
 
 static void setActivationFunction(Layer* layer, Activation activation);
 
@@ -25,6 +39,7 @@ static void initWeights(NeuralNetwork* neuralNetwork);
 static double generateUniformBias();
 static double generateGaussianBias(double avg, double deviation);
 static Layer newLayer(int numNeurons, Activation activation);
+static ConvolutionalLayer newConvolutionalLayer(int inputHeight, int inputWidth, int kernelHeight, int kernelWidth);
 
 void initZolfoNeural()
 {
@@ -43,12 +58,18 @@ static double linearDerivative(double x)
 
 static double sigmoid(double x)
 {
-	return 1 / (1 + exp(-x));
+	return 1.0 / (1.0 + exp(-x));
 }
 
 static double sigmoidDerivative(double x)
 {
-	return x * (1 - x);
+	return x * (1.0 - x);
+}
+
+static double tanhDerivative(double x)
+{
+	double tanhX = tanh(x);
+	return 1.0 - (tanhX * tanhX);
 }
 
 static double relu(double x)
@@ -61,6 +82,29 @@ static double reluDerivative(double x)
     return (x > 0.0) ? 1.0 : 0.0;
 }
 
+static double swish(double x)
+{
+	return x * sigmoid(x);
+}
+
+static double swishDerivative(double x)
+{
+	double sigmoidX = sigmoid(x);
+	return sigmoidX + x * sigmoidX * (1.0 - sigmoidX);
+}
+
+static double mish(double x)
+{
+	return x * tanh(log(1.0 + exp(x)));
+}
+
+static double mishDerivative(double x)
+{
+	double exp2X = exp(2.0 * x);
+	double denominator = 2.0 * exp(x) + exp2X + 2.0;
+	return exp2X * (4.0 * x + 4.0) / (denominator * denominator);
+}
+
 static double softmax(double x)
 {
 	double expVal = exp(x);
@@ -70,6 +114,26 @@ static double softmax(double x)
 static double softmaxDerivative(double x)
 {
 	return x * (1.0 - x);
+}
+
+static double softplus(double x)
+{
+	return log(1.0 + exp(x));
+}
+
+static double softplusDerivative(double x)
+{
+	return 1.0 / (1.0 + exp(-x));
+}
+
+static double binaryStep(double x)
+{
+	return (x >= 0) ? 1.0 : 0.0;
+}
+
+static double binaryStepDerivative(double x)
+{
+	return 0.0;
 }
 
 static void setActivationFunction(Layer* layer, Activation activation)
@@ -85,13 +149,33 @@ static void setActivationFunction(Layer* layer, Activation activation)
 			layer->activation = &sigmoid;
 			layer->activationDerivative = &sigmoidDerivative;
 			break;
+		case TANH:
+			layer->activation = &tanh;
+			layer->activationDerivative = &tanhDerivative;
+			break;
 		case RELU:
 			layer->activation = &relu;
 			layer->activationDerivative = &reluDerivative;
 			break;
+		case SWISH:
+			layer->activation = &swish;
+			layer->activationDerivative = &swishDerivative;
+			break;
+		case MISH:
+			layer->activation = &mish;
+			layer->activationDerivative = &mishDerivative;
+			break;
 		case SOFTMAX:
 			layer->activation = &softmax;
 			layer->activationDerivative = &softmaxDerivative;
+			break;
+		case SOFTPLUS:
+			layer->activation = &softplus;
+			layer->activationDerivative = &softplusDerivative;
+			break;
+		case BINARYSTEP:
+			layer->activation = &binaryStep;
+			layer->activationDerivative = &binaryStepDerivative;
 			break;
 	}
 }
