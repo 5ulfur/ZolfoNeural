@@ -6,12 +6,17 @@ The library aims to be **simple** to use but at the same time **complete** and t
 
 ### To-do:
 - Add more activation functions
+- Add methods for bias initialization
+- Add different methods for weights initialization (as for the biases)
+- Add gradients
 - Add optimization algorithms
+- Add loss functions
+- Add data manipulation functions
+- Add other types of neural networks (CNN, RNN, etc.)
 - Write Documentation
-- Add things to do
 
 ## Features
-- Create neural networks with more than one hidden layer
+- Create feed forward neural networks with more than one hidden layer
 - Choose different activation functions for each layer
 
 ## Contributing
