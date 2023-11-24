@@ -39,7 +39,6 @@ static void initWeights(NeuralNetwork* neuralNetwork);
 static double generateUniformBias();
 static double generateGaussianBias(double avg, double deviation);
 static Layer newLayer(int numNeurons, Activation activation);
-static ConvolutionalLayer newConvolutionalLayer(int inputHeight, int inputWidth, int kernelHeight, int kernelWidth);
 
 void initZolfoNeural()
 {
